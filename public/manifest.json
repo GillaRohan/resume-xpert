@@ -1,0 +1,18 @@
+{
+  "short_name": "ResumeXpert",
+  "name": "Resume Xpert - AI Career & Recruitment Intelligence",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "AI-Powered Career & Recruitment Intelligence Platform"
+}
