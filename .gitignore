@@ -32,3 +32,10 @@ dist-ssr/
 .vercel
 
 .vercel
+
+# Python
+__pycache__/
+*.py[cod]
+backend/.env
+venv/
+.pytest_cache/

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AWSArchitectureModal } from './AWSArchitectureModal';
+import { AWSBedrockLabModal } from './AWSBedrockLabModal';
 
 export const Navbar: React.FC = () => {
   const {
@@ -29,6 +30,7 @@ export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAwsModalOpen, setIsAwsModalOpen] = useState(false);
+  const [isBedrockLabOpen, setIsBedrockLabOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
@@ -120,14 +122,28 @@ export const Navbar: React.FC = () => {
               {/* AWS GenAI Specs */}
               <button
                 onClick={() => setIsAwsModalOpen(true)}
-                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   isOnDark
                     ? 'bg-orange-500/15 border border-orange-500/20 text-orange-300 hover:bg-orange-500/25'
                     : 'bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100'
                 }`}
               >
-                <Cpu className="w-3.5 h-3.5" />
-                AWS Architecture
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Cpu className="w-3.5 h-3.5 text-orange-500" />
+                <span>AWS GenAI Live</span>
+              </button>
+
+              {/* Bedrock Studio */}
+              <button
+                onClick={() => setIsBedrockLabOpen(true)}
+                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  isOnDark
+                    ? 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25'
+                    : 'bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Bedrock Studio</span>
               </button>
 
               {/* Search */}
@@ -232,6 +248,13 @@ export const Navbar: React.FC = () => {
                   <Cpu className="w-3.5 h-3.5" />
                   AWS Architecture
                 </button>
+                <button
+                  onClick={() => { setIsBedrockLabOpen(true); setMobileOpen(false); }}
+                  className="w-full py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Bedrock Studio
+                </button>
               </div>
             </div>
           </div>
@@ -241,8 +264,9 @@ export const Navbar: React.FC = () => {
       {/* Spacer (only add for non-hero pages) */}
       {roleMode !== 'landing' && <div className="h-16" />}
 
-      {/* AWS Architecture Modal */}
+      {/* AWS Architecture & Bedrock Modals */}
       <AWSArchitectureModal isOpen={isAwsModalOpen} onClose={() => setIsAwsModalOpen(false)} />
+      <AWSBedrockLabModal isOpen={isBedrockLabOpen} onClose={() => setIsBedrockLabOpen(false)} />
     </>
   );
 };

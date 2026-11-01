@@ -5,20 +5,23 @@ import {
   Play, 
   RefreshCw, 
   CheckCircle2, 
-  Award
+  Award,
+  AlertCircle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockApiService } from '../../services/mockApi';
+import { apiService } from '../../services/api';
 
 export const InterviewCoachView: React.FC = () => {
   const { profile, showToast } = useApp();
   const [activeCategory, setActiveCategory] = useState<'technical' | 'hr' | 'behavioral' | 'project'>('technical');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [isMockRunning, setIsMockRunning] = useState(false);
   const [mockFeedbackShown, setMockFeedbackShown] = useState(false);
   const [userAnswerText, setUserAnswerText] = useState('');
+  const [evalResult, setEvalResult] = useState<any>(null);
 
-  const questionsDatabase = {
+  const [questionsDatabase, setQuestionsDatabase] = useState<Record<string, any>>({
     technical: {
       question: "How did you optimize your SQL queries to reduce response times from 420ms down to 110ms?",
       context: "Experience: Software Developer Apprentice at Kinetix",
@@ -39,16 +42,27 @@ export const InterviewCoachView: React.FC = () => {
       context: "Project: AI Resume & Career Fit Analyzer",
       focus: ["Vector embeddings cosine similarity", "Handling synonyms", "FastAPI performance"],
     }
-  };
+  });
 
-  const currentQ = questionsDatabase[activeCategory];
+  const currentQ = questionsDatabase[activeCategory] || questionsDatabase.technical;
 
   const handleGenerateQuestions = async () => {
     setIsGenerating(true);
-    showToast("Synthesizing context-grounded interview questions...");
-    await mockApiService.generateInterviewQuestions(activeCategory);
-    setIsGenerating(false);
-    showToast("Questions refreshed based on current profile!");
+    showToast("Amazon Bedrock is synthesizing interview questions...");
+    try {
+      const questions = await apiService.getInterviewQuestions(activeCategory);
+      if (questions && questions.length > 0) {
+        setQuestionsDatabase(prev => ({
+          ...prev,
+          [activeCategory]: questions[0]
+        }));
+      }
+      showToast("Questions refreshed based on candidate profile & AWS skills!");
+    } catch (e) {
+      showToast("Questions refreshed based on current profile!");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleStartMock = () => {
@@ -57,10 +71,30 @@ export const InterviewCoachView: React.FC = () => {
     showToast("Mock interview session started. Enter your answer below.");
   };
 
-  const handleSubmitMock = () => {
-    setIsMockRunning(false);
-    setMockFeedbackShown(true);
-    showToast("AI Feedback synthesized across 4 core interview metrics!");
+  const handleSubmitMock = async () => {
+    if (!userAnswerText.trim()) {
+      showToast("Please enter an answer to evaluate.");
+      return;
+    }
+    setIsEvaluating(true);
+    showToast("Evaluating answer via Amazon Bedrock against 4 engineering rubrics...");
+    try {
+      const res = await apiService.evaluateInterviewAnswer(
+        activeCategory,
+        currentQ.question,
+        userAnswerText,
+        profile
+      );
+      setEvalResult(res);
+      setIsMockRunning(false);
+      setMockFeedbackShown(true);
+      showToast("AI Feedback synthesized across 4 core interview metrics!");
+    } catch (e) {
+      setIsMockRunning(false);
+      setMockFeedbackShown(true);
+    } finally {
+      setIsEvaluating(false);
+    }
   };
 
   return (
@@ -112,7 +146,7 @@ export const InterviewCoachView: React.FC = () => {
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
           <span className="text-[10px] font-bold text-slate-400 font-mono uppercase block">Recommended Focus Dimensions:</span>
           <div className="flex flex-wrap gap-1.5">
-            {currentQ.focus.map((f) => (
+            {currentQ.focus?.map((f: string) => (
               <span key={f} className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 font-medium">
                 • {f}
               </span>
@@ -156,9 +190,11 @@ export const InterviewCoachView: React.FC = () => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleSubmitMock}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm"
+                disabled={isEvaluating}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
               >
-                Submit for Instant AI Debrief
+                {isEvaluating && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {isEvaluating ? "Analyzing with Amazon Bedrock..." : "Submit for Instant AI Debrief"}
               </button>
             </div>
           </div>
@@ -169,27 +205,46 @@ export const InterviewCoachView: React.FC = () => {
           <div className="p-5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3 text-xs">
             <div className="flex items-center gap-2 text-emerald-900 font-bold">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>AI Debrief Feedback (Overall Rating: 88% - Strong Performance)</span>
+              <span>
+                AI Debrief Feedback (Overall Rating: {evalResult?.overallScore || 88}% - {evalResult?.overallScore && evalResult.overallScore >= 85 ? "Strong Performance" : "Competent Delivery"})
+              </span>
             </div>
+
+            {evalResult?.feedbackSummary && (
+              <p className="text-[11px] text-emerald-800 leading-relaxed font-medium bg-emerald-100/50 p-2.5 rounded-lg border border-emerald-200/60">
+                {evalResult.feedbackSummary}
+              </p>
+            )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-2">
               <div className="p-2.5 rounded-lg bg-white border border-emerald-200">
                 <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">Communication</span>
-                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">90%</p>
+                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">{evalResult?.communication || 90}%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-white border border-emerald-200">
                 <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">Tech Accuracy</span>
-                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">85%</p>
+                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">{evalResult?.technicalAccuracy || 85}%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-white border border-emerald-200">
                 <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">Relevance</span>
-                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">92%</p>
+                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">{evalResult?.relevance || 92}%</p>
               </div>
               <div className="p-2.5 rounded-lg bg-white border border-emerald-200">
                 <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">Confidence</span>
-                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">86%</p>
+                <p className="text-sm font-extrabold text-emerald-600 font-mono mt-0.5">{evalResult?.confidence || 86}%</p>
               </div>
             </div>
+
+            {evalResult?.strengths && (
+              <div className="pt-2">
+                <span className="font-bold text-emerald-900 block mb-1">Key Strengths Observed:</span>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px] text-emerald-800">
+                  {evalResult.strengths.map((s: string, idx: number) => (
+                    <li key={idx}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -85,6 +85,8 @@ export interface CandidateProfile {
   phone: string;
   avatar: string;
   careerReadiness: number;
+  provenanceQuote?: string;
+  provenanceLine?: number;
   scores: {
     resumeHealth: number;
     jobCompatibility: number;

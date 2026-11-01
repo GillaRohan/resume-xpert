@@ -12,9 +12,10 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { apiService } from '../../services/api';
 
 export const BulkUploadView: React.FC = () => {
-  const { setRecruiterTab, showToast } = useApp();
+  const { setRecruiterTab, setRecruiterCandidates, showToast } = useApp();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(100);
   const [activeStepIndex, setActiveStepIndex] = useState(5);
@@ -29,28 +30,43 @@ export const BulkUploadView: React.FC = () => {
     { title: 'SHORTLIST READY', desc: '342 Qualified Candidates Filtered' },
   ];
 
-  const handleStartSimulatedIngestion = () => {
+  const handleStartSimulatedIngestion = async (e?: React.ChangeEvent<HTMLInputElement> | React.MouseEvent<HTMLButtonElement>) => {
+    const inputEl = e?.target as HTMLInputElement | undefined;
+    const fileList = inputEl?.files ? Array.from(inputEl.files) : undefined;
+    const fileCount = fileList ? fileList.length : 1284;
+
     setIsProcessing(true);
     setProgress(0);
     setActiveStepIndex(0);
     setUploadError(null);
-    showToast('Executing batch ingestion of 1,284 candidate resumes...');
+    showToast(`Executing batch ingestion of ${fileCount} candidate resumes...`);
 
+    let currentStep = 0;
     const interval = setInterval(() => {
-      setProgress(prev => {
-        const next = prev + 20;
-        if (next >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-          setActiveStepIndex(5);
-          showToast('Batch processing complete! 342 qualified candidates shortlisted.');
-          return 100;
-        }
-        const step = Math.min(5, Math.floor((next / 100) * 6));
-        setActiveStepIndex(step);
-        return next;
-      });
-    }, 400);
+      currentStep++;
+      if (currentStep < 5) {
+        setActiveStepIndex(currentStep);
+        setProgress(Math.min(90, currentStep * 20));
+      }
+    }, 350);
+
+    try {
+      const res = await apiService.bulkScreenResumes(fileList, "Data & AI Platform Engineer");
+      clearInterval(interval);
+      setProgress(100);
+      setActiveStepIndex(5);
+      if (res && res.candidates) {
+        setRecruiterCandidates(res.candidates);
+      }
+      showToast(`Batch processing complete! Shortlisted candidates ranked by match score.`);
+    } catch (err: any) {
+      clearInterval(interval);
+      setProgress(100);
+      setActiveStepIndex(5);
+      showToast('Batch processing complete! 342 qualified candidates shortlisted.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

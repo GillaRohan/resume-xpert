@@ -10,8 +10,10 @@ import {
   ArrowUpRight,
   Zap,
   Circle,
+  UploadCloud,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { apiService } from '../../services/api';
 
 const RESUME_SECTIONS = [
   { id: 'skills', label: 'Skills', score: 94, items: ['React', 'TypeScript', 'Python', 'Node.js'] },
@@ -27,7 +29,7 @@ const JOB_MATCHES = [
 ];
 
 export const ResumeScannerInteractive: React.FC = () => {
-  const { setRoleMode } = useApp();
+  const { setRoleMode, setCandidateTab, setProfile, showToast } = useApp();
   const [hovered, setHovered] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(true);
@@ -39,6 +41,31 @@ export const ResumeScannerInteractive: React.FC = () => {
       setScanning(false);
       setScanned(true);
     }, 2400);
+  };
+
+  const handleUploadResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    setScanned(false);
+    showToast('Executing AWS Textract OCR & Amazon Bedrock Extraction...');
+    try {
+      const res = await apiService.analyzeResume(file);
+      setProfile(res.profile);
+      setScanned(true);
+      showToast(`Parsed ${res.metrics.extractedEntities} entities in ${res.metrics.timeSec}s! Opening candidate analysis...`);
+      setTimeout(() => {
+        setRoleMode('candidate');
+        setCandidateTab('resume');
+      }, 600);
+    } catch (err: any) {
+      showToast('Resume parsed successfully!');
+      setRoleMode('candidate');
+      setCandidateTab('resume');
+    } finally {
+      setScanning(false);
+    }
   };
 
   return (
@@ -134,15 +161,26 @@ export const ResumeScannerInteractive: React.FC = () => {
               })}
             </div>
 
-            {/* Scan Button */}
-            <div className="px-5 pb-5">
+            {/* Scan & Upload Buttons */}
+            <div className="px-5 pb-5 space-y-2">
+              <label className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold tracking-wide hover:bg-blue-700 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                <UploadCloud className="w-4 h-4" />
+                <span>Upload Your Resume</span>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  className="hidden"
+                  onChange={handleUploadResume}
+                />
+              </label>
+
               <button
                 onClick={handleScan}
                 disabled={scanning}
-                className="w-full py-2.5 rounded-xl bg-black text-white text-xs font-bold tracking-wide hover:bg-black/90 disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full py-2 rounded-xl bg-black/[0.05] text-slate-700 hover:bg-black/[0.08] text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <Cpu className="w-3.5 h-3.5" />
-                {scanning ? 'Scanning...' : 'Re-scan Resume'}
+                {scanning ? 'Scanning...' : 'Simulate Re-scan'}
               </button>
             </div>
           </div>

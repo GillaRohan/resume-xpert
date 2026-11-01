@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Resume Xpert - AWS CloudFormation Infrastructure Template.
+  Deploys S3 Storage Bucket with KMS Encryption, IAM Execution Roles,
+  Lambda Inference Triggers, and Bedrock/Textract Policies.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+    Description: Deployment target environment.
+
+  S3BucketName:
+    Type: String
+    Default: resume-xpert-genai-storage
+    Description: S3 bucket name for PDF/DOCX resumes and generated reports.
+
+Resources:
+  # KMS Customer Managed Key for Resume Document Encryption
+  ResumeStorageKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS Key for Resume Xpert Document Encryption at rest
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: resume-xpert-key-policy
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
+  ResumeStorageKmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/resume-xpert-key
+      TargetKeyId: !Ref ResumeStorageKmsKey
+
+  # Amazon S3 Document Bucket with SSE-KMS & Public Access Block
+  ResumeStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${S3BucketName}-${AWS::AccountId}-${AWS::Region}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyId: !GetAtt ResumeStorageKmsKey.Arn
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionOldResumesToGlacier
+            Status: Enabled
+            ExpirationInDays: 365
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: STANDARD_IA
+
+  # IAM Execution Role for Resume Xpert Backend & Lambda
+  ResumeXpertExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ResumeXpert-Backend-Role-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - ec2.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BedrockAndTextractAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Amazon Bedrock Foundation Models
+              - Sid: BedrockModelInvocation
+                Effect: Allow
+                Action:
+                  - 'bedrock:InvokeModel'
+                  - 'bedrock:InvokeModelWithResponseStream'
+                  - 'bedrock:ListFoundationModels'
+                  - 'bedrock:GetFoundationModel'
+                Resource:
+                  - 'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-sonnet*'
+                  - 'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku*'
+                  - 'arn:aws:bedrock:*::foundation-model/amazon.titan-text*'
+                  - 'arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text*'
+              # AWS Textract OCR
+              - Sid: TextractDocumentAnalysis
+                Effect: Allow
+                Action:
+                  - 'textract:DetectDocumentText'
+                  - 'textract:AnalyzeDocument'
+                  - 'textract:StartDocumentAnalysis'
+                  - 'textract:GetDocumentAnalysis'
+                Resource: '*'
+              # Amazon S3 Read/Write
+              - Sid: S3StorageAccess
+                Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:DeleteObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !GetAtt ResumeStorageBucket.Arn
+                  - !Sub '${ResumeStorageBucket.Arn}/*'
+              # KMS Decrypt/GenerateDataKey
+              - Sid: KMSUsage
+                Effect: Allow
+                Action:
+                  - 'kms:Decrypt'
+                  - 'kms:GenerateDataKey'
+                Resource: !GetAtt ResumeStorageKmsKey.Arn
+
+Outputs:
+  S3BucketArn:
+    Description: ARN of the encrypted Resume Storage S3 Bucket
+    Value: !GetAtt ResumeStorageBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-S3BucketArn'
+
+  IAMRoleArn:
+    Description: ARN of the IAM Execution Role with Bedrock & Textract privileges
+    Value: !GetAtt ResumeXpertExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutionRoleArn'
+

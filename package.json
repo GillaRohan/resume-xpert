@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "python backend/run.py",
+    "backend": "python backend/run.py",
+    "start:all": "node scripts/start-all.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

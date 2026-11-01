@@ -11,7 +11,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockApiService } from '../../services/mockApi';
+import { apiService } from '../../services/api';
 
 export const JobCreationModal: React.FC = () => {
   const { isJobCreateOpen, setIsJobCreateOpen, showToast } = useApp();
@@ -30,9 +30,9 @@ export const JobCreationModal: React.FC = () => {
 
   const handleGenerateAI = async () => {
     setIsGenerating(true);
-    showToast("AI is generating optimized job requisition...");
+    showToast("Amazon Bedrock is generating optimized job requisition...");
     try {
-      const generated = await mockApiService.generateJobDescription(title || "Senior Data & Intelligence Engineer");
+      const generated = await apiService.generateJobDescription(title || "Senior Data & Intelligence Engineer");
       setTitle(generated.title);
       setExperience(generated.experience);
       setLocation("San Francisco, CA (Hybrid / Remote)");

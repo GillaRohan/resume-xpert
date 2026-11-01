@@ -51,6 +51,7 @@ interface AppContextType {
   notifications: NotificationItem[];
   markNotificationAsRead: (id: string) => void;
   jobMatches: JobMatchItem[];
+  setJobMatches: React.Dispatch<React.SetStateAction<JobMatchItem[]>>;
   skillGaps: SkillGapItem[];
   closeSkillGap: (id: string) => void;
   toggleActionStep: (id: number) => void;
@@ -180,6 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notifications,
         markNotificationAsRead,
         jobMatches,
+        setJobMatches,
         skillGaps,
         closeSkillGap,
         toggleActionStep,

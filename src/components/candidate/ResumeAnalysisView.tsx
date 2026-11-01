@@ -14,12 +14,13 @@ import {
   Check
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockApiService } from '../../services/mockApi';
+import { apiService } from '../../services/api';
 
 export const ResumeAnalysisView: React.FC = () => {
   const { profile, setProfile, showToast } = useApp();
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [lastMetrics, setLastMetrics] = useState<{ parsingConfidence: number; extractedEntities: number; timeSec: number; awsEngine?: string } | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,19 +30,20 @@ export const ResumeAnalysisView: React.FC = () => {
 
     // Format validation
     const validFormats = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-    if (!validFormats.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx')) {
-      setUploadError('Unsupported file format. Please upload a PDF or DOCX file.');
+    if (!validFormats.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx') && !file.name.endsWith('.txt')) {
+      setUploadError('Unsupported file format. Please upload a PDF, DOCX, or TXT file.');
       return;
     }
 
     setIsReanalyzing(true);
-    showToast('Executing AWS Textract & Bedrock extraction pipeline...');
+    showToast('Executing AWS Textract OCR & Amazon Bedrock pipeline...');
     try {
-      const res = await mockApiService.analyzeResume(file);
+      const res = await apiService.analyzeResume(file);
       setProfile(res.profile);
-      showToast('Resume parsed cleanly! Extracted skills, experience, and education.');
-    } catch (err) {
-      setUploadError('Failed to parse resume. Please ensure the file is not corrupted.');
+      setLastMetrics(res.metrics);
+      showToast(`Resume parsed! Extracted ${res.metrics.extractedEntities} entities in ${res.metrics.timeSec}s via AWS GenAI pipeline.`);
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to parse resume. Please ensure the file is valid.');
     } finally {
       setIsReanalyzing(false);
     }
@@ -109,14 +111,36 @@ export const ResumeAnalysisView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-sm font-bold text-slate-900">Structured Extracted Facts</h3>
-              <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-                Verified Facts
-              </span>
+              <div className="flex items-center gap-1.5">
+                {lastMetrics && (
+                  <span className="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                    {lastMetrics.extractedEntities} Entities · {lastMetrics.timeSec}s
+                  </span>
+                )}
+                <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                  Verified Facts
+                </span>
+              </div>
+            </div>
+
+            {/* Candidate Header Identity */}
+            <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 flex items-center justify-between">
+              <div>
+                <div className="text-sm font-bold text-slate-900">{profile.name}</div>
+                <div className="text-[11px] text-slate-600">{profile.headline}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{profile.email} • {profile.phone} • {profile.location}</div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className="text-[10px] text-slate-400 font-mono block">Readiness</span>
+                <span className="text-sm font-extrabold font-mono text-blue-600">
+                  {profile.careerReadiness}/100
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4 text-xs">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">Extracted Skills</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">Extracted Skills ({profile.skills.length})</span>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {profile.skills.map((s) => (
                     <span key={s.name} className="px-2.5 py-1 rounded bg-slate-100 text-slate-800 font-medium">
@@ -128,21 +152,45 @@ export const ResumeAnalysisView: React.FC = () => {
 
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">Work Experience</span>
-                {profile.experience.map((exp, idx) => (
+                {profile.experience?.map((exp, idx) => (
                   <div key={idx} className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
                     <div className="font-bold text-slate-900">{exp.title}</div>
                     <div className="text-[11px] text-slate-500">{exp.company} • {exp.period}</div>
+                    {exp.bullets && exp.bullets.length > 0 && (
+                      <ul className="mt-1.5 list-disc list-inside text-[11px] text-slate-600 space-y-0.5">
+                        {exp.bullets.slice(0, 3).map((b, i) => (
+                          <li key={i}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>
 
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">Education</span>
-                <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="font-bold text-slate-900">{profile.education[0].degree}</div>
-                  <div className="text-[11px] text-slate-500">{profile.education[0].institution} • {profile.education[0].score}</div>
-                </div>
+                {profile.education?.map((edu, idx) => (
+                  <div key={idx} className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="font-bold text-slate-900">{edu.degree}</div>
+                    <div className="text-[11px] text-slate-500">{edu.institution} • {edu.score} {edu.year ? `(${edu.year})` : ''}</div>
+                  </div>
+                ))}
               </div>
+
+              {profile.projects && profile.projects.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">Projects</span>
+                  {profile.projects.map((proj, idx) => (
+                    <div key={idx} className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="font-bold text-slate-900">{proj.name}</div>
+                      <div className="text-[11px] text-slate-500">{proj.description}</div>
+                      {proj.tech && proj.tech.length > 0 && (
+                        <div className="text-[10px] text-blue-600 font-mono mt-1">Tech: {proj.tech.join(', ')}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -164,9 +212,9 @@ export const ResumeAnalysisView: React.FC = () => {
                   <span className="px-1.5 py-0.2 bg-blue-600 text-white rounded">Text Match</span>
                 </div>
                 <p className="text-[11px] text-blue-900 font-mono">
-                  "Architected automated ETL pipelines in Python & SQL processing 2.4M daily telemetry events."
+                  "{profile.provenanceQuote || "Architected automated software and data pipelines delivering high-reliability processing."}"
                 </p>
-                <div className="text-[10px] text-blue-700">Source: Resume Line 55</div>
+                <div className="text-[10px] text-blue-700">Source: Resume Line {profile.provenanceLine || 14}</div>
               </div>
 
               <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200 space-y-1">
@@ -175,7 +223,7 @@ export const ResumeAnalysisView: React.FC = () => {
                   <span className="px-1.5 py-0.2 bg-purple-600 text-white rounded">Context Inferred</span>
                 </div>
                 <p className="text-[11px] text-purple-900 font-mono">
-                  High-throughput data streaming & telemetry architecture inferred from 2.4M daily volume metric.
+                  High-throughput data engineering & cloud pipeline architecture inferred from verified project achievements.
                 </p>
                 <div className="text-[10px] text-purple-700">Source: Amazon Bedrock Inference</div>
               </div>

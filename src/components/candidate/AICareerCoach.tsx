@@ -10,6 +10,7 @@ import {
   MicOff
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { apiService } from '../../services/api';
 
 interface Message {
   sender: 'ai' | 'user';
@@ -21,10 +22,11 @@ export const AICareerCoach: React.FC = () => {
   const { profile, showToast } = useApp();
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [inputValue, setInputValue] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'ai',
-      text: `Hello ${profile.name.split(' ')[0]}. I've reviewed your candidate profile and 86 Career Readiness index. How can I assist your career progression today?`,
+      text: `Hello ${profile.name.split(' ')[0]}. I've reviewed your candidate profile and ${profile.careerReadiness} Career Readiness index. How can I assist your career progression today?`,
       time: 'Just now'
     }
   ]);
@@ -39,31 +41,31 @@ export const AICareerCoach: React.FC = () => {
     "Simulate a technical interview question."
   ];
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const text = textToSend || inputValue;
-    if (!text.trim()) return;
+    if (!text.trim() || isThinking) return;
 
     const userMsg: Message = { sender: 'user', text, time: 'Just now' };
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
+    setIsThinking(true);
 
-    setTimeout(() => {
-      let reply = "";
-      const lower = text.toLowerCase();
-      if (lower.includes("score")) {
-        reply = `Your 86 score reflects high technical proficiency in Python & SQL (88%) and verified projects (91%). Points were deducted for missing Docker containerization and advanced cloud architecture credentials. Completing a Docker Compose project will push your score above 90.`;
-      } else if (lower.includes("job") || lower.includes("match")) {
-        reply = `Your #1 matched role is 'Data Analyst — Product & Growth' at Stripe Metrics (92% fit). You match 5 out of 5 required skills, and your ETL telemetry experience directly aligns with their requisition.`;
-      } else if (lower.includes("skill") || lower.includes("learn")) {
-        reply = `The highest ROI skill for your target role is Docker containerization (3 weeks estimated). Over 70% of data engineer and analytics openings in your target salary tier require container deployments.`;
-      } else if (lower.includes("interview")) {
-        reply = `Technical Drill Question: "Explain how you optimized database response times from 420ms to 110ms in your Spring Boot developer role." Focus your answer on indexing, query plan analysis, and connection pooling.`;
-      } else {
-        reply = `Understood. In ${selectedLanguage}, I recommend quantifying your project bullet points with explicit business outcomes (e.g. % latency reduction or automated time saved).`;
-      }
-
+    try {
+      const history = messages.slice(-4).map(m => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text
+      }));
+      const reply = await apiService.chatWithCoach(text, selectedLanguage, profile, history);
       setMessages(prev => [...prev, { sender: 'ai', text: reply, time: 'Just now' }]);
-    }, 600);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        sender: 'ai', 
+        text: `I recommend continuing to optimize your technical profile in ${selectedLanguage} with verified cloud credentials.`, 
+        time: 'Just now' 
+      }]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   return (
@@ -134,6 +136,18 @@ export const AICareerCoach: React.FC = () => {
               </div>
             </div>
           ))}
+
+          {isThinking && (
+            <div className="flex gap-3 max-w-[85%]">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                <span className="text-[11px] font-mono">Amazon Bedrock is thinking...</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Prompt Suggestions */}

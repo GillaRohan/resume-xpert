@@ -1,90 +1,174 @@
 # RESUME XPERT
-### AI-Powered Career & Recruitment Intelligence Platform
+### AWS Generative AI Career & Recruitment Intelligence Platform
 
-> **"Your Resume. Your Potential. Your Next Opportunity."**
+> **"Your Resume. Your Potential. Your Next Opportunity -- Powered by AWS GenAI."**
 
 ---
 
 ## 🌟 Executive Overview
-**Resume Xpert** is a state-of-the-art AI career and talent intelligence operating system engineered for ambitious job candidates and high-velocity recruitment teams. It replaces ordinary SaaS admin dashboards with a futuristic, cinematic, and explainable neural interface.
+**Resume Xpert** is an end-to-end, enterprise-grade AI career and talent intelligence operating system engineered for ambitious job candidates and high-velocity recruitment teams. 
+
+The platform is integrated with a **production-ready Python FastAPI backend** and a cinematic **React + Vite frontend**, powered by **Amazon Bedrock (Claude 3.5 Sonnet / Titan)**, **AWS Textract**, **Amazon S3**, and **Titan Vector Embeddings**.
 
 Built specifically for:
-- 🎓 **College Project Demonstrations & Placement Reviews**
-- 🚀 **Hackathon Showcases & Startup Pitches**
-- 💼 **Recruiter Screenings & Live Evaluations**
+- 🎓 **College Capstone Projects & Placement Reviews**
+- 🚀 **AWS AI Hackathons & Startup Showcases**
+- 💼 **Recruiter Screenings & Automated Talent Shortlisting**
 
 ---
 
-## 🎨 Visual Identity & Design System
-- **Palette**: Deep navy/midnight (`#030712`, `#0B1120`, `#0F172A`), bright electric blue (`#0066FF`), cyan (`#00F0FF`), indigo (`#6366F1`), and subtle violet accents.
-- **Glassmorphism & Glows**: Layered backdrop blur (`backdrop-blur-xl`), glowing borders, scanning laser sweeps, and animated ambient orbs.
-- **Typography**: Google Fonts (*Plus Jakarta Sans*, *Inter*, and *JetBrains Mono* for technical telemetry).
-- **Themes**: Seamless Dark Mode & Light Mode support with instant persistence.
+## ☁️ AWS Generative AI Architecture
+
+```
+                  ┌────────────────────────────────────────┐
+                  │          Vite + React Frontend         │
+                  │        (Port 3000 / Proxy /api)        │
+                  └──────────────────┬─────────────────────┘
+                                     │ REST HTTP / JSON
+                                     ▼
+                  ┌────────────────────────────────────────┐
+                  │      FastAPI Python Server (Port 8000) │
+                  │       (Boto3 / PyPDF / Scikit-Learn)   │
+                  └───────┬──────────┬──────────┬──────────┘
+                          │          │          │
+         ┌────────────────┘          │          └────────────────┐
+         ▼                           ▼                           ▼
+┌──────────────────┐       ┌──────────────────┐       ┌──────────────────────┐
+│   AWS Textract   │       │  Amazon Bedrock  │       │   Amazon Bedrock     │
+│   Document OCR   │       │ Claude 3.5 Sonnet│       │  Titan Embeddings    │
+│  & S3 Ingestion  │       │  & Titan Text    │       │  1536-dim Vector RAG │
+└──────────────────┘       └──────────────────┘       └──────────────────────┘
+```
+
+### 1. Document Ingestion & OCR: AWS Textract + Amazon S3
+- Candidate resumes (PDF, DOCX, TXT) are ingested and parsed.
+- AWS Textract extracts structured text, tabular metrics, and multi-column formatting, with PyPDF local fallback.
+
+### 2. LLM Feature Extraction: Amazon Bedrock (Anthropic Claude 3.5 Sonnet)
+- Extracts candidate skills, education, work experience, projects, and certifications into a validated schema.
+- Assigns explicit line-level provenance ("Line 55: Text Match") and inferred capabilities.
+- Calculates an explainable 5-dimensional Career Readiness index (Technical, Experience, Projects, Education, Certifications).
+
+### 3. Vector Embeddings & RAG: Amazon Bedrock Titan Embeddings (`amazon.titan-embed-text-v1`)
+- Generates 1536-dimensional vector embeddings for candidate Skill DNA.
+- Computes cosine similarity between candidate profile vectors and job requisitions.
+- Detects duplicate candidate applications using vector fingerprinting.
+
+### 4. Responsible AI & Guardrails: Amazon Bedrock Guardrails
+- DEI Blind Screening mode redacts candidate PII (name, photo, contact) to eliminate cognitive bias.
+- Enforces Human-in-the-Loop policies for recruitment shortlisting.
 
 ---
 
 ## ⚡ Key Modules & Experiences
 
-### 1. Cinematic Landing Page & Interactive Hero
-- **Hero Section**: "Turn Your Resume Into Your Next Opportunity" with live animated pipeline (`Resume → AI Analysis → Skills & XP → Job Match → Roadmap`) and floating dynamic tags (`92% Match`, `Python Detected`, `3 Skill Gaps`, `Career Readiness 86`).
-- **Interactive Resume Scanner**: Live digital resume card with real-time vector highlights for Skills, Experience, Projects, Certifications, and Job Alignment.
-- **Dual-Sided Choice**: "Choose Your Path" for Candidates vs. Recruiters.
-- **Feature Showcase**: 8 bespoke interactive feature cards (Resume Analysis, Smart Matching, Skill Gaps, Career Readiness, AI Screening, Explainable Ranking, Duplicate Detection, and Talent Pool Analytics).
+### 1. Candidate Workspace
+- **Overview Dashboard**: Circular **Career Readiness** gauge, Resume Health, Top Job Fit (92%), and Skill Strength.
+- **Resume Analyzer**: Real-time PDF/DOCX file upload, line evidence provenance, and AI resume improvement recommendations.
+- **Career & Job Matcher**: Live vector matching against catalog jobs + instant custom job description analyzer.
+- **Skill Gap Intelligence**: Skill bridge matrix (`Current Skills → Skill Gaps → Learning Goal → Real Project → Job Ready`).
+- **Learning Roadmap**: Interactive timeline filterable by 30 Days, 60 Days, 90 Days, and 6 Months.
+- **Xpert AI Coach**: Context-aware assistant powered by Amazon Bedrock with multilingual support (**English, Hindi, Telugu, Tamil, Kannada**).
+- **Mock Interview Coach**: Technical, HR, Behavioral, and Project question drills with AI debrief across 4 dimensions (**Communication, Tech Accuracy, Relevance, Confidence**).
 
-### 2. Candidate Experience
-- **Overview Dashboard**: Large circular **86 Career Readiness** index with visually interconnected vector metrics (Resume Health 87%, Job Compatibility 82%, Skill Strength 91%, Profile Completeness 76%).
-- **Resume Analysis & Skill DNA**: High-fidelity digital resume with multi-layer NER extraction telemetry and a dynamic, vector-weighted Skill DNA map.
-- **Career Readiness Blueprint**: 5-dimensional breakdown (Technical, Experience, Projects, Education, Certifications) and interactive *"How to Reach 95"* action steps.
-- **Job Match Explorer**: Side-by-side profile vs. job vector matrix with **MATCHED**, **PARTIAL**, and **MISSING** indicators, plus natural language AI match reasoning.
-- **Skill Gap Intelligence**: Visual transformation journey (`Current Skills → Skill Gaps → Learning → Project → Job Ready`) and ROI-ranked priority gap cards with direct "Close This Gap" action.
-- **Career Roadmap**: Interactive milestone timeline filterable by **30 Days**, **60 Days**, **90 Days**, and **6 Months**.
-- **Xpert AI Coach**: AI chat with animated pulsing AI orb, quick prompt suggestions, voice input simulation, and multilingual dialect support (**English, Hindi, Telugu, Tamil, Kannada**).
-- **Mock Interview Coach**: Technical, HR, Behavioral, and Project question drills with instant 4-metric debrief (**Communication**, **Technical Accuracy**, **Relevance**, **Confidence**).
-
-### 3. Recruiter Experience
-- **Recruiter Command Center**: Large animated recruitment funnel (**1,284 Applications → 342 Qualified → 87 Shortlisted → 24 Interview Ready → 6 Final Candidates**).
-- **Bulk Resume Upload**: Drag-and-drop zone supporting PDF, DOCX, and ZIP archives with a real-time 6-stage simulated pipeline.
-- **AI Candidate Screening**: Automated candidate ranking (#01 Alex Morgan 92% "Excellent Match") with required/preferred skills breakdown, project relevance, and *"Why This Candidate?"* reasoning.
-- **Candidate Comparison**: Side-by-side benchmark of 3 applicants with visual category winner badges.
-- **Explainable AI (XAI)**: SHAP-style feature attribution breakdown (Required Skills 35%, Experience 25%, Projects 25%, Education 15%) and natural language rationale.
-- **Talent Intelligence**: Macro workforce analytics with skill availability percentages, seniority distribution bands, and automated strategic insights.
-- **Duplicate Detection**: Side-by-side similarity audit (94% vector match) with **Review Diff**, **Ignore**, and **Merge Profiles** controls.
-- **Job Creation with AI**: Requisition generator with a single-click *"Generate with AI"* button that auto-populates market-standard criteria.
-
-### 4. Global Platform Features
-- **Global Command Palette (`Ctrl + K` / `⌘K`)**: Quick fuzzy search across candidates, jobs, skills, and tools.
-- **Real-Time Notification Drawer**: Activity feed tracking resume parsing, job match alerts, and recruiter shortlists.
-- **Auth & Onboarding**: Cinematic login screen and 5-step guided onboarding wizard.
+### 2. Recruiter Hub
+- **Command Center**: Recruitment funnel pipeline (1,284 applications → 342 qualified → 87 shortlisted → 6 finalists).
+- **Bulk Upload**: Batch resume ingestion with real-time 6-stage AWS processing telemetry.
+- **Candidate Ranking**: AI screening ranking with required/preferred skills breakdown and *"Why This Candidate?"* reasoning.
+- **Candidate Comparison**: Side-by-side benchmark of top applicants with overall leader trophy.
+- **Explainable AI (XAI)**: SHAP-style attribution weights and feature explanations.
+- **Duplicate Detection**: Vector fingerprinting detecting duplicate applications and resume variations.
+- **AI Job Description Generator**: Single-click requisition creator powered by Amazon Bedrock.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
-- **Framework**: React 18 + Vite 5 + TypeScript
-- **Styling**: Tailwind CSS + Bespoke Custom CSS
-- **Icons**: Lucide Icons
-- **State Management**: React Context (`AppContext.tsx`)
-- **Service Layer**: Fully decoupled mock service (`/services/mockApi.ts`) ready for FastAPI / Python / LangChain / HuggingFace backend integration.
+## 🛠️ Tech Stack & Directory Structure
 
----
+- **Backend**: Python 3.10+ / FastAPI, Uvicorn, Boto3 (AWS SDK), Pydantic v2, PyPDF, Scikit-learn, Requests, Dotenv.
+- **Frontend**: React 18, Vite 5, TypeScript, Tailwind CSS, Lucide Icons.
+- **Cloud & AI**: Amazon Bedrock, AWS Textract, Amazon S3, Titan Vector Embeddings.
 
-## 🚀 Running the Project Locally
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Run development server (running at http://localhost:3000/)
-npm run dev
-
-# 3. Production build
-npm run build
+```
+aws_project/
+├── backend/                        # Python FastAPI Backend
+│   ├── app/
+│   │   ├── config.py               # AWS & environment configuration
+│   │   ├── main.py                 # FastAPI application & CORS routing
+│   │   ├── services/
+│   │   │   ├── aws_service.py      # Boto3 Bedrock, Textract, S3 & vector service
+│   │   │   ├── resume_parser.py    # NER extraction & career readiness scoring
+│   │   │   ├── coach_service.py    # AI Coach & mock interview evaluation
+│   │   │   ├── job_service.py      # Vector cosine job matching & AI JD generator
+│   │   │   └── recruiter_service.py# Bulk screening, comparison & duplicate detection
+│   │   └── routers/
+│   │       ├── aws_status.py       # GET /api/aws/status & POST /api/aws/config
+│   │       ├── resumes.py          # POST /api/resumes/analyze
+│   │       ├── coach.py            # POST /api/coach/chat & evaluate-answer
+│   │       ├── jobs.py             # POST /api/jobs/match & match-custom
+│   │       └── recruiter.py        # POST /api/recruiter/bulk-screen
+│   ├── .env.example                # AWS credentials template
+│   ├── requirements.txt            # Python dependencies
+│   └── run.py                      # Standalone backend server launcher
+├── src/                            # React 18 + TypeScript Frontend
+│   ├── components/                 # Candidate, Recruiter & Common Views
+│   ├── services/
+│   │   ├── api.ts                  # Unified API client with resilient fallbacks
+│   │   └── mockApi.ts              # Compatibility adapter
+│   └── context/                    # AppContext global state
+├── scripts/
+│   └── start-all.js                # One-click dual server launcher
+├── start.bat                       # Windows double-click start script
+├── package.json
+└── vite.config.ts                  # Proxy configured for /api -> port 8000
 ```
 
 ---
 
-## 👨‍💻 Demo Profile Data
-- **Candidate**: Alex Morgan (B.S. CS & Data CalTech '25, 3.85 GPA)
-- **Top Match**: Data Analyst — Stripe Metrics Co. (92% Fit)
-- **Skills**: Python, SQL, AWS, Java, Machine Learning, Tableau, Git
-- **Gaps**: Docker & Containerization, Power BI Advanced DAX, PySpark
-- **Recruiter Pool**: 1,284 candidates, 342 qualified, 87 shortlisted, 6 finalists
+## 🚀 Running the Project
+
+### Option A: One-Click Windows Launch
+Double-click `start.bat` in the project root folder. It starts both the FastAPI backend and the Vite frontend in separate terminal windows!
+
+### Option B: Using npm
+```bash
+# 1. Install frontend dependencies
+npm install
+
+# 2. Run both Backend (Port 8000) and Frontend (Port 3000) concurrently:
+npm run start:all
+```
+
+### Option C: Run Separately
+```bash
+# Terminal 1 - Backend
+python backend/run.py
+# (Listening on http://127.0.0.1:8000 - Interactive Swagger Docs: http://127.0.0.1:8000/docs)
+
+# Terminal 2 - Frontend
+npm run dev
+# (Listening on http://localhost:3000)
+```
+
+---
+
+## 🔑 AWS Credentials Configuration
+
+You can configure AWS credentials in either of two ways:
+
+1. **Directly in the Web Interface**:
+   - Click the **"AWS GenAI Live"** pill in the top navigation bar.
+   - Switch to the **"Live AWS Connection & Settings"** tab.
+   - Enter your AWS Region, Access Key ID, and Secret Access Key, then click **"Save Settings"**.
+   - Click **"Test AWS Connection"** to verify live connectivity with Amazon Bedrock!
+
+2. **In the `.env` file**:
+   - Edit `backend/.env` with your AWS credentials:
+     ```env
+     AWS_REGION=us-east-1
+     AWS_ACCESS_KEY_ID=your_access_key_here
+     AWS_SECRET_ACCESS_KEY=your_secret_key_here
+     AWS_S3_BUCKET=resume-xpert-genai-storage
+     BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
+     ```
+
+> **Note**: If AWS credentials are left blank or offline, the platform automatically engages its built-in intelligent GenAI engine so all features (resume parsing, coaching, job matching, bulk screening) remain 100% functional for offline presentations and local demonstrations.
