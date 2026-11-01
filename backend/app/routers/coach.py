@@ -14,6 +14,11 @@ class ChatRequest(BaseModel):
     history: Optional[List[Dict[str, str]]] = None
 
 
+class QuestionRequest(BaseModel):
+    category: Optional[str] = "technical"
+    profile: Optional[Dict[str, Any]] = None
+
+
 class EvaluateAnswerRequest(BaseModel):
     category: str
     question: str
@@ -29,7 +34,8 @@ class RoadmapRequest(BaseModel):
 @router.post("/chat")
 def chat_with_coach(req: ChatRequest):
     """
-    Context-aware career coaching conversation powered by Amazon Bedrock with multilingual dialect support.
+    Context-aware career coaching conversation powered by Amazon Bedrock with multilingual dialect support
+    and 2020-2025 technical training datasets.
     """
     reply = coach_service.chat(
         message=req.message,
@@ -41,12 +47,25 @@ def chat_with_coach(req: ChatRequest):
 
 
 @router.get("/interview-questions")
-def get_interview_questions(category: str = "technical"):
+def get_interview_questions_get(category: str = "technical"):
     """
-    Returns role-tailored technical, HR, behavioral, or project interview questions.
+    Returns role-tailored interview questions matched from 2020-2025 historical benchmarks.
     """
     questions = coach_service.get_interview_questions(category=category)
     return {"category": category, "questions": questions}
+
+
+@router.post("/interview-questions")
+def get_interview_questions_post(req: QuestionRequest):
+    """
+    Returns personalized interview questions matched against the candidate's exact profile
+    and the 4-5 year historical enterprise benchmark dataset (2020-2025).
+    """
+    questions = coach_service.get_interview_questions(
+        category=req.category or "technical",
+        profile=req.profile
+    )
+    return {"category": req.category, "questions": questions}
 
 
 @router.post("/evaluate-answer")
@@ -71,4 +90,3 @@ def generate_roadmap(req: RoadmapRequest):
     """
     roadmap = coach_service.generate_roadmap(role=req.role or "Data Analyst", profile=req.profile)
     return {"role": req.role, "milestones": roadmap}
-

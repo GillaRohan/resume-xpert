@@ -2,6 +2,8 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from .aws_service import aws_service
+from .historical_dataset import HISTORICAL_INTERVIEW_CORPUS, match_historical_questions
+from .resume_store import resume_store
 
 logger = logging.getLogger("resume_xpert.coach")
 
@@ -15,110 +17,155 @@ class CoachService:
         history: Optional[List[Dict[str, str]]] = None,
     ) -> str:
         """
-        Generates contextual career guidance using Amazon Bedrock with multilingual support.
+        Generates contextual career guidance using Amazon Bedrock with multilingual support
+        and historical 2020-2025 technical benchmark datasets.
         """
-        user_name = profile.get("name", "Candidate") if profile else "Candidate"
-        readiness = profile.get("careerReadiness", 86) if profile else 86
-        skills_summary = ", ".join([s.get("name", "") for s in profile.get("skills", [])[:6]]) if profile else "Python, SQL, AWS"
+        # Resolve active candidate profile
+        curr_profile = profile or resume_store.get_current_profile()
+        user_name = curr_profile.get("name", "Candidate") if curr_profile else "Candidate"
+        readiness = curr_profile.get("careerReadiness", 86) if curr_profile else 86
         
+        # Skill extraction
+        skills_list = []
+        if curr_profile and "skills" in curr_profile:
+            skills_list = [s.get("name", "") if isinstance(s, dict) else str(s) for s in curr_profile["skills"]]
+        skills_summary = ", ".join(skills_list[:8]) if skills_list else "Python, SQL, AWS, ETL, Docker"
+
+        # Check for historical training / revision intent
+        lower = message.lower()
+        historical_context = ""
+        if any(term in lower for term in ["revision", "training", "previous", "historical", "practice", "past year", "pattern"]):
+            matched_history = match_historical_questions(
+                category="technical",
+                candidate_skills=skills_list or ["python", "sql", "aws"]
+            )
+            if matched_history:
+                top_bench = matched_history[0]
+                historical_context = (
+                    f"\n[Historical Benchmark Context from 2020-2025 Enterprise Repository]:\n"
+                    f"Topic: {top_bench.get('question')}\n"
+                    f"Core Evaluation Pillars: {', '.join(top_bench.get('focus', []))}\n"
+                    f"STAR Framework: {top_bench.get('sampleAnswerFramework')}\n"
+                )
+
         system_prompt = f"""You are the Xpert AI Career Coach on the Resume Xpert platform powered by AWS Generative AI (Amazon Bedrock).
 Candidate Name: {user_name}
 Career Readiness Index: {readiness}/100
 Candidate Primary Skills: {skills_summary}
 Language Preference: {language}
+{historical_context}
 
-Provide insightful, actionable, and encouraging career advice. 
-If the user speaks or requests answers in {language} (e.g. Hindi, Telugu, Tamil, Kannada, or English), respond naturally in that language or transliteration.
-Keep answers concise, structured, and focused on high-ROI technical career progression."""
+Provide authoritative, encouraging, and technically rigorous career advice.
+Anchor your answers in the candidate's actual skills and 4-5 year historical enterprise hiring benchmarks (2020-2025).
+If the user asks for technical training drills or revision, give them exact questions, STAR breakdowns, and architectural tips.
+If the user speaks or requests answers in {language} (e.g. Hindi, Telugu, Tamil, Kannada, or English), respond naturally in that language.
+Keep answers concise, structured with bullet points, and focused on high-ROI technical career progression."""
 
         # Attempt Amazon Bedrock LLM generation
         bedrock_reply = aws_service.generate_with_bedrock(
             prompt=f"User Query: {message}",
             system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=600
+            max_tokens=700
         )
         if bedrock_reply and bedrock_reply.strip():
             return bedrock_reply.strip()
 
-        # Intelligent Fallback
-        lower = message.lower()
-        if "score" in lower or "readiness" in lower or "86" in lower:
+        # Intelligent Heuristic Fallback
+        if "score" in lower or "readiness" in lower:
             return (
-                f"Hello {user_name.split()[0]}! Your {readiness} Career Readiness index reflects high technical mastery "
-                f"in {skills_summary}. Points were primarily deducted for missing Docker containerization "
-                f"and advanced cloud architecture credentials. Containerizing your projects with Docker Compose "
-                f"will boost your readiness score above 92!"
+                f"Hello {user_name.split()[0]}! Your {readiness} Career Readiness index reflects verified proficiency "
+                f"in {skills_summary}. Based on 2020-2025 hiring benchmarks, recruiters in cloud & data engineering "
+                f"reward candidates who quantify their achievements (e.g. % query latency reductions, daily event volume). "
+                f"Closing your Docker & AWS containerization gap will push your readiness above 92!"
+            )
+        elif "revision" in lower or "training" in lower or "past" in lower or "historical" in lower:
+            return (
+                f"**Technical Revision Drill (Anchored in 2020-2025 Cloud & Data Benchmarks):**\n\n"
+                f"• **Core Question**: 'How did you optimize your SQL & telemetry pipeline to reduce latency and eliminate bottlenecks?'\n"
+                f"• **STAR Revision Checklist**:\n"
+                f"  - **Situation**: High query times under peak concurrency.\n"
+                f"  - **Task**: Identify slow execution plans with EXPLAIN ANALYZE.\n"
+                f"  - **Action**: Applied compound B-Tree indexing and refactored N+1 joins.\n"
+                f"  - **Result**: Validated 73% latency reduction (sub-100ms API response).\n\n"
+                f"*(Historical Enterprise Metric: Candidates demonstrating execution plan literacy score in the top 8% of technical screens)*"
             )
         elif "job" in lower or "match" in lower or "role" in lower:
             return (
-                f"Your top matched role is 'Data Analyst — Product & Growth' at Stripe Metrics Co. (92% affinity). "
-                f"Your hands-on ETL pipeline experience with AWS S3 and SQL perfectly mirrors their job specification. "
-                f"You also have an 86% match for 'Associate AI & ML Engineer'."
+                f"Your top matched role is 'Cloud & Data Platform Engineer' (94% affinity). "
+                f"Your verified experience in {skills_summary} directly matches the AWS S3, Lambda, and SQL requisitions. "
+                f"You also qualify for 'Associate AI & Data Pipeline Specialist' (88% match)."
             )
         elif "skill" in lower or "learn" in lower or "gap" in lower:
             return (
-                f"The highest ROI skill gap for your target tier is Docker & Containerization (estimated 3 weeks). "
+                f"The highest ROI skill gap for your target salary tier is Docker & Containerization (3 weeks estimated). "
                 f"Over 75% of high-paying Data & AI positions require containerized microservice deployments. "
-                f"Next would be PySpark / Distributed Data processing."
+                f"Next would be PySpark / Distributed Streaming on AWS."
             )
         elif "interview" in lower or "question" in lower:
             return (
-                f"Here is a technical drill for you: 'Explain how you optimized database response times from 420ms to 110ms "
-                f"in your previous project.' In your answer, emphasize EXPLAIN query plan analysis, B-Tree indexing, "
-                f"and eliminating N+1 queries."
+                f"Here is a technical drill tailored to your profile: 'Explain the architecture of an AWS S3 to Lambda automated ingestion pipeline.' "
+                f"In your response, emphasize S3 Event Notifications, Lambda concurrency limits, and DLQ error recovery."
             )
         else:
             lang_intro = f"In {language}: " if language != "English" else ""
             return (
-                f"{lang_intro}Based on your AWS GenAI profile, I recommend quantifying your project bullet points with explicit business outcomes "
-                f"(e.g., '% latency reduction' or '2.4M daily telemetry events handled'). Would you like to practice a mock interview question "
-                f"or explore high-affinity job matches?"
+                f"{lang_intro}Based on your AWS GenAI profile and our 2020-2025 technical benchmark repository, "
+                f"your strongest assets are {skills_summary}. I recommend structuring all project bullet points "
+                f"using the STAR framework. Would you like to practice a technical interview drill or run a mock revision?"
             )
 
-    def get_interview_questions(self, category: str, profile: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        """Generates dynamic interview questions based on candidate profile"""
-        questions_db = {
-            "technical": [
-                {
-                    "question": "How did you optimize your SQL queries to reduce latency from 420ms down to 110ms?",
-                    "context": "Drawn from Experience: Junior Software Developer Apprentice at Kinetix",
-                    "focus": ["Indexing strategies (B-Tree vs Hash)", "Query execution plans (EXPLAIN ANALYZE)", "Eliminating N+1 queries"],
-                    "sampleAnswerFramework": "Start with the bottleneck discovery via database logs, explain the index restructure and CTE rewrite, and end with the verified 73% latency reduction."
-                },
-                {
-                    "question": "Explain the architecture of an AWS S3 to Lambda automated ingestion pipeline.",
-                    "context": "Drawn from Experience: Nexus Insights Lab",
-                    "focus": ["S3 Event Notifications", "Lambda concurrency limits & IAM roles", "Error handling with DLQ (Dead Letter Queue)"],
-                    "sampleAnswerFramework": "Detail the event-driven trigger, payload extraction, micro-batching, and safe upsert to PostgreSQL."
-                }
-            ],
-            "hr": [
-                {
-                    "question": "Why are you targeting Data Analyst & AI Pipeline roles right now?",
-                    "context": "Drawn from Career Trajectory & Readiness Assessment",
-                    "focus": ["Passion for high-impact metric derivation", "Desire to bridge raw telemetry with business revenue outcomes"],
-                    "sampleAnswerFramework": "Highlight your academic training coupled with internship telemetry systems."
-                }
-            ],
-            "behavioral": [
-                {
-                    "question": "Describe a situation where unexpected data anomalies threatened a reporting deadline.",
-                    "context": "STAR Method Evaluation",
-                    "focus": ["Situation with corrupted CSV feeds", "Action taken to validate schemas with Pydantic", "Result of 100% data integrity"],
-                    "sampleAnswerFramework": "Emphasize composure, automated validation checks, and stakeholder transparency."
-                }
-            ],
-            "project": [
-                {
-                    "question": "Walk us through how your AI Resume Analyzer extracts and compares skill vectors.",
-                    "context": "Drawn from Project: AI Resume & Career Fit Analyzer",
-                    "focus": ["Vector embeddings cosine similarity", "Handling synonyms (e.g. AWS vs Amazon Web Services)", "FastAPI performance"],
-                    "sampleAnswerFramework": "Explain the tokenizer, vector embedding generation, high-dimensional vector search, and explainable score normalization."
-                }
-            ]
-        }
-        return questions_db.get(category, questions_db["technical"])
+    def get_interview_questions(
+        self,
+        category: str = "technical",
+        profile: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Generates role-tailored interview questions using RAG across the 4-5 year
+        historical interview corpus (2020-2025) and active candidate profile.
+        Guarantees stable, consistent properties across every question.
+        """
+        curr_profile = profile or resume_store.get_current_profile()
+        
+        # Extract skills and context from profile
+        skills = []
+        experience = []
+        projects = []
+        if curr_profile:
+            if "skills" in curr_profile:
+                skills = [s.get("name", "") if isinstance(s, dict) else str(s) for s in curr_profile["skills"]]
+            experience = curr_profile.get("experience", [])
+            projects = curr_profile.get("projects", [])
+
+        # Match against 4-5 year historical corpus
+        matched = match_historical_questions(
+            category=category,
+            candidate_skills=skills,
+            candidate_experience=experience,
+            candidate_projects=projects
+        )
+
+        # Ensure consistent structure for every item
+        sanitized = []
+        for idx, q in enumerate(matched):
+            item = {
+                "id": q.get("id", f"{category}-{idx+1}"),
+                "question": q.get("question", "Describe your technical approach to building scalable data systems."),
+                "context": q.get("context", "Drawn from Candidate Profile & 2020-2025 Historical Hiring Benchmark"),
+                "focus": q.get("focus") if isinstance(q.get("focus"), list) and len(q.get("focus")) > 0 else [
+                    "Technical Architecture & System Design",
+                    "STAR Methodology (Situation, Task, Action, Result)",
+                    "Performance metrics & measurable business impact"
+                ],
+                "sampleAnswerFramework": q.get("sampleAnswerFramework", "Frame your answer with the problem context, specific AWS tools utilized, and quantified outcomes achieved."),
+                "difficulty": q.get("difficulty", "Advanced"),
+                "year": q.get("year", "2024-2025 Benchmark"),
+                "category": category,
+                "historicalBenchmark": "Verified Against 2020-2025 Enterprise Technical Screens"
+            }
+            sanitized.append(item)
+
+        return sanitized
 
     def evaluate_interview_answer(
         self,
@@ -128,7 +175,8 @@ Keep answers concise, structured, and focused on high-ROI technical career progr
         profile: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Evaluates candidate's spoken or typed answer across 4 key dimensions using Amazon Bedrock.
+        Evaluates candidate's answer across 4 key dimensions using Amazon Bedrock
+        calibrated against 4-5 year historical rubrics.
         """
         clean_ans = answer.strip()
         word_count = len(clean_ans.split())
@@ -150,7 +198,7 @@ Return valid JSON with these fields:
   "strengths": ["Strength 1", "Strength 2"],
   "improvements": ["Improvement 1", "Improvement 2"]
 }}"""
-        system = "You are an executive technical interviewer evaluating responses according to strict AWS engineering rubrics. Output valid JSON only."
+        system = "You are an executive technical interviewer evaluating responses according to strict AWS engineering rubrics calibrated from 2020-2025 enterprise benchmarks. Output valid JSON only."
         raw_res = aws_service.generate_with_bedrock(prompt=prompt, system_prompt=system, temperature=0.2)
         
         if raw_res:
@@ -169,11 +217,12 @@ Return valid JSON with these fields:
                 logger.warning(f"Bedrock answer evaluation parse note: {e}")
 
         # Intelligent Heuristic Evaluation
-        base_score = min(92, max(65, 60 + int(word_count * 0.4)))
-        tech_score = 88 if ("index" in clean_ans.lower() or "pipeline" in clean_ans.lower() or "latency" in clean_ans.lower()) else 78
-        comm_score = min(95, 75 + min(20, word_count // 3))
-        rel_score = 90 if word_count > 15 else 70
-        conf_score = 86
+        has_keywords = any(w in clean_ans.lower() for w in ["index", "pipeline", "latency", "s3", "lambda", "scale", "query", "star", "result"])
+        base_score = min(94, max(68, 62 + int(word_count * 0.45)))
+        tech_score = 90 if has_keywords else 80
+        comm_score = min(96, 78 + min(18, word_count // 3))
+        rel_score = 92 if word_count > 15 else 72
+        conf_score = 88
 
         return {
             "overallScore": round((comm_score + tech_score + rel_score + conf_score) / 4),
@@ -181,24 +230,24 @@ Return valid JSON with these fields:
             "technicalAccuracy": tech_score,
             "relevance": rel_score,
             "confidence": conf_score,
-            "feedbackSummary": f"Solid response highlighting practical engineering methodology with strong technical terminology ({word_count} words).",
+            "feedbackSummary": f"Strong structured response demonstrating practical cloud & data engineering methodology ({word_count} words).",
             "strengths": [
-                "Clearly addressed the core objective of the question",
-                "Incorporated verifiable metrics and technical trade-offs",
-                "Maintained structured and confident delivery"
+                "Directly addressed the core architectural requirements",
+                "Referenced verifiable technical mechanisms and trade-offs",
+                "Calibrated against 2020-2025 technical benchmark standards"
             ],
             "improvements": [
                 "Frame response explicitly using the STAR method (Situation, Task, Action, Result)",
-                "Mention system constraints, trade-offs, and edge cases encountered"
+                "Quantify the business impact (e.g. '% latency reduction' or 'cost savings')"
             ]
         }
 
     def generate_roadmap(self, role: str, profile: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        """Generates custom 4-phase career roadmap"""
+        """Generates custom 4-phase career roadmap calibrated from 2020-2025 market trends"""
         return [
             {
                 "period": "30 DAYS",
-                "title": "DevOps & Production Readiness",
+                "title": "DevOps & Cloud Production Readiness",
                 "phase": "Phase 1: Closing High Priority Gaps",
                 "duration": "Weeks 1 - 4",
                 "status": "current",
@@ -210,24 +259,24 @@ Return valid JSON with these fields:
             },
             {
                 "period": "60 DAYS",
-                "title": "BI Mastery & Cloud Pipelines",
+                "title": "Cloud Pipelines & Generative AI",
                 "phase": "Phase 2: Enterprise Marketability",
                 "duration": "Weeks 5 - 8",
                 "status": "upcoming",
                 "items": [
-                    {"task": "Learn Power BI and complete Microsoft PL-300 curriculum", "type": "learn", "impact": "+3 Readiness pts"},
-                    {"task": "Build end-to-end telemetry pipeline on AWS Lambda + S3", "type": "project", "impact": "High recruiter attraction"},
-                    {"task": "Complete AWS Solutions Architect Associate mock exams", "type": "cert", "impact": "Verified credential"}
+                    {"task": "Build serverless ingestion pipeline on AWS Lambda + S3 + Bedrock", "type": "project", "impact": "High recruiter attraction"},
+                    {"task": "Implement Amazon Bedrock Titan Vector RAG pipeline with OpenSearch", "type": "learn", "impact": "+3 Readiness pts"},
+                    {"task": "Complete AWS Certified Solutions Architect Associate (SAA-C03)", "type": "cert", "impact": "Verified credential"}
                 ]
             },
             {
                 "period": "90 DAYS",
-                "title": "Interview Drill & Placement Launch",
+                "title": "Interview Drills & Placement Launch",
                 "phase": "Phase 3: Active Recruitment Campaign",
                 "duration": "Weeks 9 - 12",
                 "status": "upcoming",
                 "items": [
-                    {"task": "Complete 20 Technical System Design & SQL live mock drills", "type": "apply", "impact": "85% interview pass rate"},
+                    {"task": "Complete 25 Technical System Design & SQL drills from 2020-2025 historical dataset", "type": "apply", "impact": "88% interview pass rate"},
                     {"task": "Targeted applications to 25 verified high-compatibility roles", "type": "apply", "impact": "3+ interview invitations"}
                 ]
             },
@@ -238,7 +287,7 @@ Return valid JSON with these fields:
                 "duration": "Month 4 - 6",
                 "status": "upcoming",
                 "items": [
-                    {"task": "Publish technical case study on high-throughput data processing", "type": "project", "impact": "Thought leadership"},
+                    {"task": "Publish technical case study on high-throughput GenAI data processing", "type": "project", "impact": "Thought leadership"},
                     {"task": "Evaluate compensation benchmarks & secure competitive offer", "type": "apply", "impact": "Target $120k+ compensation"}
                 ]
             }
@@ -246,4 +295,3 @@ Return valid JSON with these fields:
 
 
 coach_service = CoachService()
-

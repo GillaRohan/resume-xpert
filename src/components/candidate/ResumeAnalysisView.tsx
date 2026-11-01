@@ -41,7 +41,8 @@ export const ResumeAnalysisView: React.FC = () => {
       const res = await apiService.analyzeResume(file);
       setProfile(res.profile);
       setLastMetrics(res.metrics);
-      showToast(`Resume parsed! Extracted ${res.metrics.extractedEntities} entities in ${res.metrics.timeSec}s via AWS GenAI pipeline.`);
+      await apiService.saveCandidateProfile(res.profile);
+      showToast(`Resume parsed & saved! Extracted ${res.metrics.extractedEntities} entities in ${res.metrics.timeSec}s via AWS GenAI pipeline.`);
     } catch (err: any) {
       setUploadError(err.message || 'Failed to parse resume. Please ensure the file is valid.');
     } finally {
@@ -61,11 +62,18 @@ export const ResumeAnalysisView: React.FC = () => {
           <p className="text-xs text-slate-500">Multi-layer document parsing with explicit line provenance and AI improvement recommendations.</p>
         </div>
 
-        <label className="cursor-pointer px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2">
-          <UploadCloud className="w-4 h-4" />
-          <span>Upload PDF / DOCX</span>
-          <input type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFileUpload} />
-        </label>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Data Saved & Active</span>
+          </div>
+
+          <label className="cursor-pointer px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2">
+            <UploadCloud className="w-4 h-4" />
+            <span>Upload PDF / DOCX</span>
+            <input type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFileUpload} />
+          </label>
+        </div>
       </div>
 
       {uploadError && (

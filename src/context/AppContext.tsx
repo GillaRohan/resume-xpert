@@ -16,6 +16,7 @@ import {
   mockJobMatches, 
   mockSkillGaps 
 } from '../data/mockData';
+import { apiService } from '../services/api';
 
 interface AppContextType {
   roleMode: RoleMode;
@@ -79,12 +80,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isJobCreateOpen, setIsJobCreateOpen] = useState(false);
 
-  const [profile, setProfile] = useState<CandidateProfile>(initialCandidateProfile);
+  // Persistent Candidate Profile initialization
+  const [profile, setProfile] = useState<CandidateProfile>(() => {
+    try {
+      const saved = localStorage.getItem('resume_xpert_saved_profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.name || parsed.skills)) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load candidate profile from localStorage:", e);
+    }
+    return initialCandidateProfile;
+  });
+
   const [recruiterCandidates, setRecruiterCandidates] = useState<RecruiterCandidate[]>(mockRecruiterCandidates);
   const [notifications, setNotifications] = useState<NotificationItem[]>(mockNotifications);
   const [jobMatches, setJobMatches] = useState<JobMatchItem[]>(mockJobMatches);
   const [skillGaps, setSkillGaps] = useState<SkillGapItem[]>(mockSkillGaps);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Auto-persist candidate profile to localStorage and backend
+  useEffect(() => {
+    if (profile) {
+      try {
+        localStorage.setItem('resume_xpert_saved_profile', JSON.stringify(profile));
+      } catch (_) {}
+      apiService.saveCandidateProfile(profile).catch(() => {});
+    }
+  }, [profile]);
+
+  // On initial mount, sync with backend persistent store if available
+  useEffect(() => {
+    apiService.getCurrentProfile().then(serverProfile => {
+      if (serverProfile && serverProfile.name) {
+        setProfile(serverProfile);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Sync dark mode with document root
   useEffect(() => {
