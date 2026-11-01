@@ -52,3 +52,4 @@ class ResumeStore:
 
 
 resume_store = ResumeStore()
+
