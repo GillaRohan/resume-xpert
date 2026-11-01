@@ -9,13 +9,26 @@
 
 ---
 
-## 🚀 Live Production Links
-- **Live Vercel Application:** [https://resume-xpert-nine.vercel.app](https://resume-xpert-nine.vercel.app)
-- **Direct Deployment URL:** [https://resume-xpert-g7dwlsbet-gillarohan.vercel.app](https://resume-xpert-g7dwlsbet-gillarohan.vercel.app)
-- **Local Dev Server:** `http://localhost:3000`
-- **Local Backend API & Swagger Docs:** `http://localhost:8000/docs`
+## Live Production Links
+
+### Frontend Web Application
+- **Live Vercel Application:** https://resume-xpert-nine.vercel.app
+- **Direct Alias:** https://resume-xpert-n40eqabfg-gillarohan.vercel.app
+
+### Live Backend Serverless API & Datasets
+- **Interactive Swagger API Docs:** https://resume-xpert-nine.vercel.app/docs
+- **2020-2025 Benchmark Dataset:** https://resume-xpert-nine.vercel.app/api/bedrock/dataset
+- **Interview Question Synthesis API:** https://resume-xpert-nine.vercel.app/api/coach/interview-questions
+- **AWS Cloud Status API:** https://resume-xpert-nine.vercel.app/api/aws/status
+- **Backend Health Check:** https://resume-xpert-nine.vercel.app/api/health
+
+### Local Development
+- **1-Click Persistent Launcher:** Double-click start_desktop.bat in project root
+- **Local Web App:** http://localhost:3000
+- **Local Backend Swagger Docs:** http://localhost:8000/docs
 
 ---
+
 
 ## 🌟 Executive Overview
 **Resume Xpert** is an end-to-end, enterprise-grade AI career and talent intelligence operating system engineered for ambitious job candidates and high-velocity recruitment teams. 
