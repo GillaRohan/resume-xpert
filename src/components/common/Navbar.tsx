@@ -12,10 +12,12 @@ import {
   Zap,
   Cpu,
   LogIn,
+  Database,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AWSArchitectureModal } from './AWSArchitectureModal';
 import { AWSBedrockLabModal } from './AWSBedrockLabModal';
+import { DatasetExplorerModal } from './DatasetExplorerModal';
 
 export const Navbar: React.FC = () => {
   const {
@@ -31,6 +33,7 @@ export const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAwsModalOpen, setIsAwsModalOpen] = useState(false);
   const [isBedrockLabOpen, setIsBedrockLabOpen] = useState(false);
+  const [isDatasetModalOpen, setIsDatasetModalOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
@@ -146,6 +149,19 @@ export const Navbar: React.FC = () => {
                 <span>Bedrock Studio</span>
               </button>
 
+              {/* Dataset & Backend Data */}
+              <button
+                onClick={() => setIsDatasetModalOpen(true)}
+                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  isOnDark
+                    ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300 hover:bg-purple-500/25'
+                    : 'bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100'
+                }`}
+              >
+                <Database className="w-3.5 h-3.5 text-purple-500" />
+                <span>Dataset & APIs</span>
+              </button>
+
               {/* Search */}
               <button
                 onClick={() => setIsCommandPaletteOpen(true)}
@@ -255,6 +271,13 @@ export const Navbar: React.FC = () => {
                   <Sparkles className="w-3.5 h-3.5" />
                   Bedrock Studio
                 </button>
+                <button
+                  onClick={() => { setIsDatasetModalOpen(true); setMobileOpen(false); }}
+                  className="w-full py-2.5 rounded-xl bg-purple-50 border border-purple-100 text-purple-700 text-xs font-semibold flex items-center justify-center gap-2"
+                >
+                  <Database className="w-3.5 h-3.5" />
+                  Dataset & APIs
+                </button>
               </div>
             </div>
           </div>
@@ -264,9 +287,10 @@ export const Navbar: React.FC = () => {
       {/* Spacer (only add for non-hero pages) */}
       {roleMode !== 'landing' && <div className="h-16" />}
 
-      {/* AWS Architecture & Bedrock Modals */}
+      {/* AWS Architecture, Bedrock & Dataset Modals */}
       <AWSArchitectureModal isOpen={isAwsModalOpen} onClose={() => setIsAwsModalOpen(false)} />
       <AWSBedrockLabModal isOpen={isBedrockLabOpen} onClose={() => setIsBedrockLabOpen(false)} />
+      <DatasetExplorerModal isOpen={isDatasetModalOpen} onClose={() => setIsDatasetModalOpen(false)} />
     </>
   );
 };

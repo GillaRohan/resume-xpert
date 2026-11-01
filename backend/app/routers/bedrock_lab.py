@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any, List
 
 from ..config import settings
 from ..services.aws_service import aws_service
+from ..services.historical_dataset import HISTORICAL_INTERVIEW_CORPUS
 
 logger = logging.getLogger("resume_xpert.bedrock_lab")
 

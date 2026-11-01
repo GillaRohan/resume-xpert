@@ -1,0 +1,175 @@
+{
+  "name": "Alex Morgan",
+  "headline": "Aspiring Data & AI Analyst | Python & Cloud Enthusiast",
+  "email": "alex.morgan@techpulse.io",
+  "location": "San Francisco, CA (Open to Remote)",
+  "phone": "+1 (555) 438-9201",
+  "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  "careerReadiness": 86,
+  "scores": {
+    "resumeHealth": 87,
+    "jobCompatibility": 82,
+    "skillStrength": 91,
+    "profileCompleteness": 76
+  },
+  "dimensions": {
+    "technicalSkills": 88,
+    "experience": 82,
+    "projects": 91,
+    "education": 85,
+    "certifications": 74
+  },
+  "actionableSteps": [
+    {
+      "id": 1,
+      "title": "Learn Docker fundamentals & containerization",
+      "impact": "+4 pts",
+      "category": "DevOps",
+      "completed": false
+    },
+    {
+      "id": 2,
+      "title": "Build one end-to-end Cloud Data Pipeline (AWS S3 + Lambda)",
+      "impact": "+3 pts",
+      "category": "Cloud",
+      "completed": false
+    },
+    {
+      "id": 3,
+      "title": "Improve System Design & Distributed Data architecture",
+      "impact": "+2 pts",
+      "category": "Architecture",
+      "completed": false
+    },
+    {
+      "id": 4,
+      "title": "Quantify project outcomes with measurable business metrics (% latency, $ saved)",
+      "impact": "+1 pt",
+      "category": "Resume",
+      "completed": true
+    }
+  ],
+  "skills": [
+    {
+      "name": "Python",
+      "category": "core",
+      "level": 94,
+      "years": 3.5,
+      "strength": "high"
+    },
+    {
+      "name": "SQL (PostgreSQL / Snowflake)",
+      "category": "data",
+      "level": 90,
+      "years": 3,
+      "strength": "high"
+    },
+    {
+      "name": "AWS (S3, EC2, Lambda)",
+      "category": "cloud",
+      "level": 78,
+      "years": 2,
+      "strength": "medium"
+    },
+    {
+      "name": "Java",
+      "category": "core",
+      "level": 75,
+      "years": 2,
+      "strength": "medium"
+    },
+    {
+      "name": "Machine Learning (Scikit-Learn)",
+      "category": "data",
+      "level": 82,
+      "years": 2,
+      "strength": "high"
+    },
+    {
+      "name": "HTML / CSS / Tailwind",
+      "category": "framework",
+      "level": 85,
+      "years": 3,
+      "strength": "high"
+    },
+    {
+      "name": "Data Visualization (Tableau)",
+      "category": "data",
+      "level": 72,
+      "years": 1.5,
+      "strength": "medium"
+    },
+    {
+      "name": "Git & CI/CD Basics",
+      "category": "core",
+      "level": 80,
+      "years": 2.5,
+      "strength": "high"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Data Analytics & Engineering Intern",
+      "company": "Nexus Insights Lab",
+      "period": "Jun 2024 - Dec 2024 (7 mos)",
+      "bullets": [
+        "Architected automated ETL pipelines in Python & SQL processing 2.4M daily telemetry events.",
+        "Integrated AWS S3 storage buckets with automated event triggers, cutting manual data sync by 85%.",
+        "Developed executive dashboard reports tracking customer churn predictors with 91% accuracy."
+      ]
+    },
+    {
+      "title": "Junior Software Developer Apprentice",
+      "company": "Kinetix Digital Solutions",
+      "period": "Jan 2024 - May 2024 (5 mos)",
+      "bullets": [
+        "Implemented RESTful API endpoints in Java Spring Boot serving analytics metrics to web clients.",
+        "Refactored relational database queries, improving average response time from 420ms to 110ms."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "AI Resume & Career Fit Analyzer",
+      "tech": [
+        "Python",
+        "OpenAI Embeddings",
+        "FastAPI",
+        "PostgreSQL"
+      ],
+      "description": "Automated semantic parsing system that extracts candidate skill vectors and scores JD match similarity.",
+      "impact": "Reduced candidate screening time by 65% across 500+ pilot applications."
+    },
+    {
+      "name": "Health Portal Analytics Engine",
+      "tech": [
+        "Python",
+        "AWS Lambda",
+        "SQL",
+        "Tableau"
+      ],
+      "description": "HIPAA-compliant streaming telemetry dashboard monitoring patient intake throughput and resource bottlenecks.",
+      "impact": "Visualized ICU capacity in real-time, adopted by 3 regional medical clinics."
+    }
+  ],
+  "education": [
+    {
+      "degree": "B.S. in Computer Science & Data Science",
+      "institution": "California Institute of Technology & Computing",
+      "year": "Graduating May 2025",
+      "score": "3.85 / 4.00 GPA"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Cloud Practitioner",
+      "issuer": "Amazon Web Services",
+      "year": "2024"
+    },
+    {
+      "name": "Professional Data Analyst Specialization",
+      "issuer": "Google / DeepLearning.AI",
+      "year": "2023"
+    }
+  ]
+}
