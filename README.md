@@ -3,6 +3,18 @@
 
 > **"Your Resume. Your Potential. Your Next Opportunity -- Powered by AWS GenAI."**
 
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Production-black?logo=vercel)](https://resume-xpert-nine.vercel.app)
+[![AWS Bedrock](https://img.shields.io/badge/AWS-Amazon%20Bedrock-orange?logo=amazon-aws)](https://resume-xpert-nine.vercel.app)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/GillaRohan/resume-xpert)
+
+---
+
+## 🚀 Live Production Links
+- **Live Vercel Application:** [https://resume-xpert-nine.vercel.app](https://resume-xpert-nine.vercel.app)
+- **Direct Deployment URL:** [https://resume-xpert-g7dwlsbet-gillarohan.vercel.app](https://resume-xpert-g7dwlsbet-gillarohan.vercel.app)
+- **Local Dev Server:** `http://localhost:3000`
+- **Local Backend API & Swagger Docs:** `http://localhost:8000/docs`
+
 ---
 
 ## 🌟 Executive Overview
