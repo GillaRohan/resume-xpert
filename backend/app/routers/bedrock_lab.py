@@ -170,3 +170,24 @@ def get_aws_telemetry():
         }
     }
 
+
+
+@router.get("/dataset")
+def get_historical_dataset():
+    """
+    Returns the complete 4-5 year historical technical interview & benchmark dataset (2020-2025)
+    used for Amazon Bedrock RAG vector matching and revision drills.
+    """
+    return {
+        "success": True,
+        "totalRecords": len(HISTORICAL_INTERVIEW_CORPUS),
+        "yearsCovered": "2020 - 2025",
+        "domains": [
+            "AWS Cloud Architecture",
+            "Data Engineering & SQL",
+            "Generative AI & LLM RAG",
+            "System Design & DevOps",
+            "Executive Behavioral STAR"
+        ],
+        "dataset": HISTORICAL_INTERVIEW_CORPUS
+    }
